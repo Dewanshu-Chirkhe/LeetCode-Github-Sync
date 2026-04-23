@@ -13,45 +13,65 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ----------------------------
+      # Checkout full repo (important)
+      # ----------------------------
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
-            fetch-depth: 0
-            ref: main
+          fetch-depth: 0
+          ref: main
+          persist-credentials: true
 
+      # ----------------------------
+      # Setup Python
+      # ----------------------------
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-            python-version: '3.10'
+          python-version: '3.10'
 
+      # ----------------------------
+      # Install dependencies
+      # ----------------------------
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # ----------------------------
+      # Run your bot
+      # ----------------------------
       - name: Run bot
         env:
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
           LEETCODE_CSRF: ${{ secrets.LEETCODE_CSRF }}
         run: python bot.py
 
+      # ----------------------------
+      # Commit & Push safely
+      # ----------------------------
       - name: Commit & Push if changes
         run: |
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-            # Always sync first
-            git pull origin main --rebase || git rebase --abort
+          # Ensure correct branch (CRITICAL)
+          git checkout main
 
-            git add .
+          # Sync latest changes FIRST
+          git pull origin main --rebase || git rebase --abort
 
-            if [ -f commit_msg.txt ]; then
-                MSG=$(cat commit_msg.txt)
-            else
-                MSG="Auto update LeetCode solutions"
-            fi
+          git add .
 
-            if ! git diff --cached --quiet; then
-                git commit -m "$MSG"
-                git push origin main
-            else
-                echo "No changes to commit"
-            fi
+          if [ -f commit_msg.txt ]; then
+            MSG=$(cat commit_msg.txt)
+          else
+            MSG="Auto update LeetCode solutions"
+          fi
+
+          # Only commit if there are changes
+          if ! git diff --cached --quiet; then
+            git commit -m "$MSG"
+            git push origin main
+          else
+            echo "No changes to commit"
+          fi
