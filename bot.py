@@ -15,7 +15,6 @@ headers = {
     "Referer": "https://leetcode.com",
 }
 
-# Add cookies only if available
 if SESSION and CSRF:
     headers["Cookie"] = f"LEETCODE_SESSION={SESSION}; csrftoken={CSRF}"
     headers["x-csrftoken"] = CSRF
@@ -36,8 +35,12 @@ def save_seen(seen):
         f.write("\n".join(seen))
 
 
-def clean_filename(name):
-    return name.replace(" ", "_").replace("-", "_")
+def format_qid(qid):
+    return str(qid).zfill(4)
+
+
+def to_camel_case(slug):
+    return "".join(word.capitalize() for word in slug.split("-"))
 
 
 # ----------------------------
@@ -63,7 +66,6 @@ def get_recent_submissions():
 
     if res.status_code != 200 or "errors" in data:
         print("❌ Failed to fetch submissions")
-        print(data)
         return []
 
     return data["data"]["recentAcSubmissionList"]
@@ -102,7 +104,7 @@ def get_submission_details(sub_id):
 # ----------------------------
 # Fetch question metadata
 # ----------------------------
-def get_question_meta(title_slug):
+def get_question_meta(slug):
     query = {
         "query": """
         query getQuestion($titleSlug: String!) {
@@ -112,14 +114,14 @@ def get_question_meta(title_slug):
           }
         }
         """,
-        "variables": {"titleSlug": title_slug}
+        "variables": {"titleSlug": slug}
     }
 
     res = requests.post(URL, json=query, headers=headers)
     data = res.json()
 
     if "errors" in data:
-        print(f"❌ Failed meta for {title_slug}")
+        print(f"❌ Failed meta for {slug}")
         return None
 
     return data["data"]["question"]
@@ -138,15 +140,22 @@ def generate_ai_readme(title, code):
 - Space: O(?)"""
 
     prompt = f"""
-    Given the LeetCode problem "{title}" and the following solution:
+You are solving a LeetCode problem.
 
-    {code}
+Problem: {title}
 
-    Write:
-    1. Approach (concise)
-    2. Time Complexity
-    3. Space Complexity
-    """
+Given this solution:
+{code}
+
+Return ONLY markdown:
+
+## 🧠 Approach
+- Explain in 4-5 concise lines
+
+## ⏱️ Complexity
+- Time: O(...)
+- Space: O(...)
+"""
 
     try:
         res = requests.post(
@@ -156,7 +165,7 @@ def generate_ai_readme(title, code):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama3-70b-8192",
+                "model": "llama-3.1-8b-instant",
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.3,
             },
@@ -165,7 +174,8 @@ def generate_ai_readme(title, code):
         data = res.json()
         return data["choices"][0]["message"]["content"]
 
-    except:
+    except Exception as e:
+        print("⚠️ Groq failed:", e)
         return """## 🧠 Approach
 <!-- Add approach -->
 
@@ -211,14 +221,16 @@ def save_problem(folder, title, slug, details):
     ext = lang_map.get(lang, "txt")
 
     runtime = details.get("runtime", "N/A")
+    runtime = f"{runtime} ms" if runtime != "N/A" else runtime
+
     memory = details.get("memory", "N/A")
+    if memory != "N/A":
+        memory = round(memory / (1024 * 1024), 2)
+        memory = f"{memory} MB"
 
-    code = details["code"]
+    code = details["code"].replace("\\n", "\n")
 
-    # Fix formatting
-    code = code.replace("\\n", "\n")
-
-    filename = clean_filename(title)
+    filename = to_camel_case(slug)
 
     with open(f"{folder}/{filename}.{ext}", "w", encoding="utf-8") as f:
         f.write(code)
@@ -233,7 +245,7 @@ def save_problem(folder, title, slug, details):
 def main():
     seen = load_seen()
     updated = False
-    commit_messages = []
+    solved_ids = []
 
     submissions = get_recent_submissions()
 
@@ -253,17 +265,14 @@ def main():
         if not meta:
             continue
 
-        q_id = meta["questionId"]
+        q_id = format_qid(meta["questionId"])
         difficulty = meta["difficulty"]
 
-        folder = f"{q_id}-{difficulty}-{sub['titleSlug']}"
+        folder = f"{q_id}-[{difficulty}]-{sub['titleSlug']}"
 
         save_problem(folder, sub["title"], sub["titleSlug"], details)
 
-        lang = details["lang"]["name"]
-        msg = f"{q_id}. {sub['title']} ({difficulty}, {lang})"
-        commit_messages.append(msg)
-
+        solved_ids.append(q_id)
         seen.add(sub_id)
         updated = True
 
@@ -271,7 +280,7 @@ def main():
         save_seen(seen)
 
         with open("commit_msg.txt", "w") as f:
-            f.write("Add:\n- " + "\n- ".join(commit_messages))
+            f.write("solved : " + ", ".join(sorted(solved_ids)))
 
         print("✅ New submissions added")
     else:
