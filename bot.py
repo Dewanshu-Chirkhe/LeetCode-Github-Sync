@@ -8,12 +8,15 @@ URL = "https://leetcode.com/graphql"
 
 headers = {
     "Content-Type": "application/json",
-    "Cookie": f"LEETCODE_SESSION={SESSION}; csrftoken={CSRF}",
-    "x-csrftoken": CSRF,
     "Referer": "https://leetcode.com",
 }
 
-USERNAME = "Dewanshu-Chirkhe"  # 🔥 replace if needed
+# Add cookies only if available (safe fallback)
+if SESSION and CSRF:
+    headers["Cookie"] = f"LEETCODE_SESSION={SESSION}; csrftoken={CSRF}"
+    headers["x-csrftoken"] = CSRF
+
+USERNAME = "Dewanshu-Chirkhe"
 
 # ----------------------------
 # Utilities
@@ -30,7 +33,7 @@ def save_seen(seen):
 
 
 # ----------------------------
-# Fetch submissions (UPDATED)
+# Fetch submissions
 # ----------------------------
 def get_recent_submissions():
     query = {
@@ -44,9 +47,7 @@ def get_recent_submissions():
           }
         }
         """,
-        "variables": {
-            "username": USERNAME
-        }
+        "variables": {"username": USERNAME}
     }
 
     res = requests.post(URL, json=query, headers=headers)
@@ -71,7 +72,9 @@ def get_submission_details(sub_id):
             code
             runtime
             memory
-            lang
+            lang {
+              name
+            }
           }
         }
         """,
@@ -81,8 +84,9 @@ def get_submission_details(sub_id):
     res = requests.post(URL, json=query, headers=headers)
     data = res.json()
 
-    if "errors" in data:
+    if "errors" in data or data["data"]["submissionDetails"] is None:
         print(f"❌ Failed details for {sub_id}")
+        print(data)
         return None
 
     return data["data"]["submissionDetails"]
@@ -124,13 +128,19 @@ def save_problem(folder, title, slug, details):
         "javascript": "js"
     }
 
-    ext = lang_map.get(details["lang"].lower(), "txt")
+    lang = details["lang"]["name"].lower()
+    ext = lang_map.get(lang, "txt")
 
     runtime = details.get("runtime", "N/A")
     memory = details.get("memory", "N/A")
 
+    code = details["code"]
+
+    # Fix formatting (important)
+    code = code.replace("\\n", "\n")
+
     with open(f"{folder}/solution.{ext}", "w", encoding="utf-8") as f:
-        f.write(details["code"])
+        f.write(code)
 
     with open(f"{folder}/README.md", "w", encoding="utf-8") as f:
         f.write(generate_readme(title, slug, runtime, memory))
@@ -158,11 +168,11 @@ def main():
         if not details:
             continue
 
-        folder = f"{sub['titleSlug']}"  # 🔥 FIXED (no questionId)
+        folder = f"{sub['titleSlug']}"
         save_problem(folder, sub["title"], sub["titleSlug"], details)
 
-        # Commit message
-        msg = f"{sub['title']} ({details['lang']})"
+        lang = details["lang"]["name"]
+        msg = f"{sub['title']} ({lang})"
         commit_messages.append(msg)
 
         seen.add(sub_id)
