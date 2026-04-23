@@ -30,18 +30,24 @@ jobs:
 
       - name: Commit & Push if changes
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add .
+            # Pull latest changes FIRST
+            git pull origin main --rebase
 
-          if [ -f commit_msg.txt ]; then
-            MSG=$(cat commit_msg.txt)
-          else
-            MSG="Auto update LeetCode solutions"
-          fi
+            git add .
 
-          git diff --cached --quiet || git commit -m "$MSG"
+            if [ -f commit_msg.txt ]; then
+                MSG=$(cat commit_msg.txt)
+            else
+                MSG="Auto update LeetCode solutions"
+            fi
 
-          git pull --rebase
-          git push
+            # Commit only if changes exist
+            if ! git diff --cached --quiet; then
+                git commit -m "$MSG"
+                git push origin main
+            else
+                echo "No changes to commit"
+            fi
