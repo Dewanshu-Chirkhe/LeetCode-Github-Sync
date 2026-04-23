@@ -1,5 +1,8 @@
 name: LeetCode Sync Bot
 
+permissions:
+  contents: write
+  
 on:
   schedule:
     - cron: "*/15 * * * *"
