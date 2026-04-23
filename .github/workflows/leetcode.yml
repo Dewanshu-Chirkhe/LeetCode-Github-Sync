@@ -61,8 +61,9 @@ jobs:
                   # Ensure correct branch (CRITICAL)
                   git checkout main
 
-                  # Sync latest changes FIRST
-                  git pull origin main --rebase || git rebase --abort
+                  # Start from the latest remote main tip.
+                  git fetch origin main
+                  git rebase origin/main || git rebase --abort
 
                   git add .
 
@@ -78,7 +79,12 @@ jobs:
 
                     # Handle races with other workflow runs by rebasing and retrying push.
                     for attempt in 1 2 3; do
-                      git pull --rebase origin main
+                      git fetch origin main
+                      git rebase origin/main || {
+                        git rebase --abort
+                        echo "Rebase conflict; cannot auto-resolve"
+                        exit 1
+                      }
                       if git push origin HEAD:main; then
                         exit 0
                       fi
