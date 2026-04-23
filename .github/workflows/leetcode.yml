@@ -47,6 +47,7 @@ jobs:
               env:
                   LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
                   LEETCODE_CSRF: ${{ secrets.LEETCODE_CSRF }}
+                  GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
               run: python bot.py
 
             # ----------------------------
