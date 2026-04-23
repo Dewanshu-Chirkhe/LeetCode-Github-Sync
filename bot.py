@@ -13,6 +13,8 @@ headers = {
     "Referer": "https://leetcode.com",
 }
 
+USERNAME = "Dewanshu-Chirkhe"  # 🔥 replace if needed
+
 # ----------------------------
 # Utilities
 # ----------------------------
@@ -28,38 +30,39 @@ def save_seen(seen):
 
 
 # ----------------------------
-# Fetch submissions
+# Fetch submissions (UPDATED)
 # ----------------------------
 def get_recent_submissions():
     query = {
         "query": """
-        query {
-          recentAcSubmissionList {
+        query getRecent($username: String!) {
+          recentAcSubmissionList(username: $username) {
             id
             title
             titleSlug
-            questionId
+            timestamp
           }
         }
-        """
+        """,
+        "variables": {
+            "username": USERNAME
+        }
     }
 
     res = requests.post(URL, json=query, headers=headers)
-
-    if res.status_code != 200:
-        print("❌ Failed to fetch submissions")
-        print(res.text)
-        return []
-
     data = res.json()
 
-    if "errors" in data:
-        print("❌ Session expired or invalid")
+    if res.status_code != 200 or "errors" in data:
+        print("❌ Failed to fetch submissions")
+        print(data)
         return []
 
     return data["data"]["recentAcSubmissionList"]
 
 
+# ----------------------------
+# Fetch submission details
+# ----------------------------
 def get_submission_details(sub_id):
     query = {
         "query": """
@@ -88,8 +91,10 @@ def get_submission_details(sub_id):
 # ----------------------------
 # README
 # ----------------------------
-def generate_readme(title, runtime, memory):
+def generate_readme(title, slug, runtime, memory):
     return f"""# {title}
+
+🔗 https://leetcode.com/problems/{slug}/
 
 ## 🧠 Approach
 <!-- Write your approach here -->
@@ -107,7 +112,7 @@ def generate_readme(title, runtime, memory):
 # ----------------------------
 # Save files
 # ----------------------------
-def save_problem(folder, title, details):
+def save_problem(folder, title, slug, details):
     os.makedirs(folder, exist_ok=True)
 
     lang_map = {
@@ -121,11 +126,14 @@ def save_problem(folder, title, details):
 
     ext = lang_map.get(details["lang"].lower(), "txt")
 
+    runtime = details.get("runtime", "N/A")
+    memory = details.get("memory", "N/A")
+
     with open(f"{folder}/solution.{ext}", "w", encoding="utf-8") as f:
         f.write(details["code"])
 
     with open(f"{folder}/README.md", "w", encoding="utf-8") as f:
-        f.write(generate_readme(title, details["runtime"], details["memory"]))
+        f.write(generate_readme(title, slug, runtime, memory))
 
 
 # ----------------------------
@@ -150,11 +158,11 @@ def main():
         if not details:
             continue
 
-        folder = f"{sub['questionId']}-{sub['titleSlug']}"
-        save_problem(folder, sub["title"], details)
+        folder = f"{sub['titleSlug']}"  # 🔥 FIXED (no questionId)
+        save_problem(folder, sub["title"], sub["titleSlug"], details)
 
-        # Commit message entry
-        msg = f"{sub['questionId']}. {sub['title']} ({details['lang']})"
+        # Commit message
+        msg = f"{sub['title']} ({details['lang']})"
         commit_messages.append(msg)
 
         seen.add(sub_id)
@@ -163,7 +171,6 @@ def main():
     if updated:
         save_seen(seen)
 
-        # Write commit message
         with open("commit_msg.txt", "w") as f:
             f.write("Add: " + ", ".join(commit_messages))
 
