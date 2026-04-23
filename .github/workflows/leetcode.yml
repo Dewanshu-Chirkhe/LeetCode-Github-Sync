@@ -2,7 +2,7 @@ name: LeetCode Sync Bot
 
 permissions:
   contents: write
-  
+
 on:
   schedule:
     - cron: "*/15 * * * *"
@@ -42,4 +42,6 @@ jobs:
           fi
 
           git diff --cached --quiet || git commit -m "$MSG"
+
+          git pull --rebase
           git push
