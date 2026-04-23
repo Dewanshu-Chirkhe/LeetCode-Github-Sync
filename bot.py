@@ -1,8 +1,12 @@
 import requests
 import os
 
+# ----------------------------
+# ENV
+# ----------------------------
 SESSION = os.getenv("LEETCODE_SESSION")
 CSRF = os.getenv("LEETCODE_CSRF")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 URL = "https://leetcode.com/graphql"
 
@@ -11,7 +15,7 @@ headers = {
     "Referer": "https://leetcode.com",
 }
 
-# Add cookies only if available (safe fallback)
+# Add cookies only if available
 if SESSION and CSRF:
     headers["Cookie"] = f"LEETCODE_SESSION={SESSION}; csrftoken={CSRF}"
     headers["x-csrftoken"] = CSRF
@@ -30,6 +34,10 @@ def load_seen():
 def save_seen(seen):
     with open("seen.txt", "w") as f:
         f.write("\n".join(seen))
+
+
+def clean_filename(name):
+    return name.replace(" ", "_").replace("-", "_")
 
 
 # ----------------------------
@@ -86,26 +94,97 @@ def get_submission_details(sub_id):
 
     if "errors" in data or data["data"]["submissionDetails"] is None:
         print(f"❌ Failed details for {sub_id}")
-        print(data)
         return None
 
     return data["data"]["submissionDetails"]
 
 
 # ----------------------------
+# Fetch question metadata
+# ----------------------------
+def get_question_meta(title_slug):
+    query = {
+        "query": """
+        query getQuestion($titleSlug: String!) {
+          question(titleSlug: $titleSlug) {
+            questionId
+            difficulty
+          }
+        }
+        """,
+        "variables": {"titleSlug": title_slug}
+    }
+
+    res = requests.post(URL, json=query, headers=headers)
+    data = res.json()
+
+    if "errors" in data:
+        print(f"❌ Failed meta for {title_slug}")
+        return None
+
+    return data["data"]["question"]
+
+
+# ----------------------------
+# AI README (Groq)
+# ----------------------------
+def generate_ai_readme(title, code):
+    if not GROQ_API_KEY:
+        return """## 🧠 Approach
+<!-- Add approach -->
+
+## ⏱️ Complexity
+- Time: O(?)
+- Space: O(?)"""
+
+    prompt = f"""
+    Given the LeetCode problem "{title}" and the following solution:
+
+    {code}
+
+    Write:
+    1. Approach (concise)
+    2. Time Complexity
+    3. Space Complexity
+    """
+
+    try:
+        res = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "llama3-70b-8192",
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.3,
+            },
+        )
+
+        data = res.json()
+        return data["choices"][0]["message"]["content"]
+
+    except:
+        return """## 🧠 Approach
+<!-- Add approach -->
+
+## ⏱️ Complexity
+- Time: O(?)
+- Space: O(?)"""
+
+
+# ----------------------------
 # README
 # ----------------------------
-def generate_readme(title, slug, runtime, memory):
+def generate_readme(title, slug, runtime, memory, code):
+    ai_content = generate_ai_readme(title, code)
+
     return f"""# {title}
 
 🔗 https://leetcode.com/problems/{slug}/
 
-## 🧠 Approach
-<!-- Write your approach here -->
-
-## ⏱️ Complexity
-- Time: O(?)
-- Space: O(?)
+{ai_content}
 
 ## 📊 Stats
 - Runtime: {runtime}
@@ -136,14 +215,16 @@ def save_problem(folder, title, slug, details):
 
     code = details["code"]
 
-    # Fix formatting (important)
+    # Fix formatting
     code = code.replace("\\n", "\n")
 
-    with open(f"{folder}/solution.{ext}", "w", encoding="utf-8") as f:
+    filename = clean_filename(title)
+
+    with open(f"{folder}/{filename}.{ext}", "w", encoding="utf-8") as f:
         f.write(code)
 
     with open(f"{folder}/README.md", "w", encoding="utf-8") as f:
-        f.write(generate_readme(title, slug, runtime, memory))
+        f.write(generate_readme(title, slug, runtime, memory, code))
 
 
 # ----------------------------
@@ -168,11 +249,19 @@ def main():
         if not details:
             continue
 
-        folder = f"{sub['titleSlug']}"
+        meta = get_question_meta(sub["titleSlug"])
+        if not meta:
+            continue
+
+        q_id = meta["questionId"]
+        difficulty = meta["difficulty"]
+
+        folder = f"{q_id}-{difficulty}-{sub['titleSlug']}"
+
         save_problem(folder, sub["title"], sub["titleSlug"], details)
 
         lang = details["lang"]["name"]
-        msg = f"{sub['title']} ({lang})"
+        msg = f"{q_id}. {sub['title']} ({difficulty}, {lang})"
         commit_messages.append(msg)
 
         seen.add(sub_id)
@@ -182,7 +271,7 @@ def main():
         save_seen(seen)
 
         with open("commit_msg.txt", "w") as f:
-            f.write("Add: " + ", ".join(commit_messages))
+            f.write("Add:\n- " + "\n- ".join(commit_messages))
 
         print("✅ New submissions added")
     else:
