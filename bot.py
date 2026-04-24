@@ -344,14 +344,11 @@ def main():
         save_seen(seen)
 
         with open("commit_msg.txt", "w") as f:
-
             f.write("LeetCode : " + ", ".join(solved_ids))
 
         print("✅ New submissions added")
         print("✅ Updated")
     else:
-        if os.path.exists("commit_msg.txt"):
-            os.remove("commit_msg.txt")
         print("No new submissions")
 
 
