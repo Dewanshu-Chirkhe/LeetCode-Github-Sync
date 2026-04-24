@@ -1,5 +1,6 @@
 import requests
 import os
+import re
 
 # ----------------------------
 # ENV
@@ -42,7 +43,6 @@ def format_qid(qid):
 def to_camel_case(slug):
     return "".join(word.capitalize() for word in slug.split("-"))
 
-
 # ----------------------------
 # Fetch submissions
 # ----------------------------
@@ -70,9 +70,8 @@ def get_recent_submissions():
 
     return data["data"]["recentAcSubmissionList"]
 
-
 # ----------------------------
-# Fetch submission details
+# Submission details
 # ----------------------------
 def get_submission_details(sub_id):
     query = {
@@ -100,9 +99,8 @@ def get_submission_details(sub_id):
 
     return data["data"]["submissionDetails"]
 
-
 # ----------------------------
-# Fetch question metadata
+# Question meta
 # ----------------------------
 def get_question_meta(slug):
     query = {
@@ -121,36 +119,99 @@ def get_question_meta(slug):
     data = res.json()
 
     if "errors" in data:
-        print(f"❌ Failed meta for {slug}")
         return None
 
     return data["data"]["question"]
 
+# ----------------------------
+# Question content + examples
+# ----------------------------
+def get_question_details(slug):
+    query = {
+        "query": """
+        query getQuestionDetail($titleSlug: String!) {
+          question(titleSlug: $titleSlug) {
+            content
+            exampleTestcases
+          }
+        }
+        """,
+        "variables": {"titleSlug": slug}
+    }
+
+    res = requests.post(URL, json=query, headers=headers)
+    data = res.json()
+
+    if "errors" in data or not data["data"]["question"]:
+        return None, None
+
+    q = data["data"]["question"]
+    return q["content"], q["exampleTestcases"]
 
 # ----------------------------
-# AI README (Groq)
+# HTML → Markdown (simple clean)
+# ----------------------------
+def clean_html(html):
+    if not html:
+        return "Not available"
+
+    # remove tags
+    text = re.sub('<.*?>', '', html)
+
+    # fix spacing
+    text = text.replace("&nbsp;", " ")
+    text = text.replace("&lt;", "<").replace("&gt;", ">")
+
+    return text.strip()
+
+# ----------------------------
+# Format examples
+# ----------------------------
+def format_examples(raw):
+    if not raw:
+        return "Not available"
+
+    lines = raw.strip().split("\n")
+    result = []
+
+    for i in range(0, len(lines), 2):
+        if i + 1 < len(lines):
+            result.append(f"Example {i//2 + 1}:\n- Input: {lines[i]}\n- Output: {lines[i+1]}")
+
+    return "\n\n".join(result)
+
+# ----------------------------
+# AI README (fixed)
 # ----------------------------
 def generate_ai_readme(title, code):
     if not GROQ_API_KEY:
         return """## 🧠 Approach
-<!-- Add approach -->
+- Identify core logic
+- Use proper data structure
+- Optimize traversal
+- Return result
 
 ## ⏱️ Complexity
-- Time: O(?)
-- Space: O(?)"""
+- Time: O(N)
+- Space: O(1)"""
 
     prompt = f"""
-You are solving a LeetCode problem.
-
 Problem: {title}
 
-Given this solution:
+Given solution:
 {code}
 
-Return ONLY markdown:
+STRICT RULES:
+- EXACTLY 4 bullet points
+- No paragraphs
+
+Format:
 
 ## 🧠 Approach
-- Explain in 4-5 concise lines
+- Point 1
+- Point 2
+- Point 3
+- Point 4
 
 ## ⏱️ Complexity
 - Time: O(...)
@@ -167,54 +228,59 @@ Return ONLY markdown:
             json={
                 "model": "llama-3.1-8b-instant",
                 "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.3,
+                "temperature": 0
             },
         )
 
         data = res.json()
         return data["choices"][0]["message"]["content"]
 
-    except Exception as e:
-        print("⚠️ Groq failed:", e)
+    except:
         return """## 🧠 Approach
-<!-- Add approach -->
+- Identify core logic
+- Use proper data structure
+- Optimize traversal
+- Return result
 
 ## ⏱️ Complexity
-- Time: O(?)
-- Space: O(?)"""
-
+- Time: O(N)
+- Space: O(1)"""
 
 # ----------------------------
-# README
+# README generator
 # ----------------------------
-def generate_readme(title, slug, runtime, memory, code):
-    ai_content = generate_ai_readme(title, code)
+def generate_readme(title, slug, runtime, memory, code, content, examples):
+    clean_content = clean_html(content)
+    formatted_examples = format_examples(examples)
+    ai = generate_ai_readme(title, code)
 
     return f"""# {title}
 
 🔗 https://leetcode.com/problems/{slug}/
 
-{ai_content}
+## 📘 Problem
+{clean_content}
+
+## 🧪 Examples
+{formatted_examples}
+
+{ai}
 
 ## 📊 Stats
 - Runtime: {runtime}
 - Memory: {memory}
 """
 
-
 # ----------------------------
-# Save files
+# Save
 # ----------------------------
-def save_problem(folder, title, slug, details):
+def save_problem(folder, title, slug, details, content, examples):
     os.makedirs(folder, exist_ok=True)
 
     lang_map = {
         "python": "py",
-        "python3": "py",
         "java": "java",
-        "cpp": "cpp",
-        "c": "c",
-        "javascript": "js"
+        "cpp": "cpp"
     }
 
     lang = details["lang"]["name"].lower()
@@ -236,8 +302,7 @@ def save_problem(folder, title, slug, details):
         f.write(code)
 
     with open(f"{folder}/README.md", "w", encoding="utf-8") as f:
-        f.write(generate_readme(title, slug, runtime, memory, code))
-
+        f.write(generate_readme(title, slug, runtime, memory, code, content, examples))
 
 # ----------------------------
 # Main
@@ -245,7 +310,6 @@ def save_problem(folder, title, slug, details):
 def main():
     seen = load_seen()
     updated = False
-    solved_ids = []
 
     submissions = get_recent_submissions()
 
@@ -255,14 +319,13 @@ def main():
         if sub_id in seen:
             continue
 
-        print(f"Processing: {sub['title']}")
+        print("Processing:", sub["title"])
 
         details = get_submission_details(sub_id)
-        if not details:
-            continue
-
         meta = get_question_meta(sub["titleSlug"])
-        if not meta:
+        content, examples = get_question_details(sub["titleSlug"])
+
+        if not details or not meta:
             continue
 
         q_id = format_qid(meta["questionId"])
@@ -270,19 +333,14 @@ def main():
 
         folder = f"{q_id}-[{difficulty}]-{sub['titleSlug']}"
 
-        save_problem(folder, sub["title"], sub["titleSlug"], details)
+        save_problem(folder, sub["title"], sub["titleSlug"], details, content, examples)
 
-        solved_ids.append(q_id)
         seen.add(sub_id)
         updated = True
 
     if updated:
         save_seen(seen)
-
-        with open("commit_msg.txt", "w") as f:
-            f.write("solved : " + ", ".join(sorted(solved_ids)))
-
-        print("✅ New submissions added")
+        print("✅ Updated")
     else:
         print("No new submissions")
 
