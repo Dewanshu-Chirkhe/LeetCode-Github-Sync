@@ -1,1 +1,1 @@
-solved : 1677
+solved : 3019
