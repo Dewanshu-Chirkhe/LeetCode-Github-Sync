@@ -310,6 +310,7 @@ def save_problem(folder, title, slug, details, content, examples):
 def main():
     seen = load_seen()
     updated = False
+    solved_ids = []
 
     submissions = get_recent_submissions()
 
@@ -335,13 +336,22 @@ def main():
 
         save_problem(folder, sub["title"], sub["titleSlug"], details, content, examples)
 
+        solved_ids.append(q_id)
         seen.add(sub_id)
         updated = True
 
     if updated:
         save_seen(seen)
+
+        with open("commit_msg.txt", "w") as f:
+
+            f.write("LeetCode : " + ", ".join(solved_ids))
+
+        print("✅ New submissions added")
         print("✅ Updated")
     else:
+        if os.path.exists("commit_msg.txt"):
+            os.remove("commit_msg.txt")
         print("No new submissions")
 
 
