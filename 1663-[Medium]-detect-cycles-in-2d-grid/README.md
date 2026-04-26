@@ -14,38 +14,23 @@ Return true if any cycle of the same value exists in grid, otherwise, return fal
  
 Example 1:
 
-
-
-
 Input: grid = [[&quot;a&quot;,&quot;a&quot;,&quot;a&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;a&quot;,&quot;a&quot;,&quot;a&quot;]]
 Output: true
 Explanation: There are two valid cycles shown in different colors in the image below:
 
-
-
 Example 2:
-
-
-
 
 Input: grid = [[&quot;c&quot;,&quot;c&quot;,&quot;c&quot;,&quot;a&quot;],[&quot;c&quot;,&quot;d&quot;,&quot;c&quot;,&quot;c&quot;],[&quot;c&quot;,&quot;c&quot;,&quot;e&quot;,&quot;c&quot;],[&quot;f&quot;,&quot;c&quot;,&quot;c&quot;,&quot;c&quot;]]
 Output: true
 Explanation: There is only one valid cycle highlighted in the image below:
 
-
-
 Example 3:
-
-
-
 
 Input: grid = [[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;],[&quot;b&quot;,&quot;z&quot;,&quot;b&quot;],[&quot;b&quot;,&quot;b&quot;,&quot;a&quot;]]
 Output: false
 
-
  
 Constraints:
-
 
 	m == grid.length
 	n == grid[i].length
@@ -53,20 +38,30 @@ Constraints:
 	grid consists only of lowercase English letters.
 
 ## 🧪 Examples
-Example 1:
-- Input: [["a","a","a","a"],["a","b","b","a"],["a","b","b","a"],["a","a","a","a"]]
-- Output: [["c","c","c","a"],["c","d","c","c"],["c","c","e","c"],["f","c","c","c"]]
+### Example 1
+**Input:** grid = [[&quot;a&quot;,&quot;a&quot;,&quot;a&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;a&quot;,&quot;a&quot;,&quot;a&quot;]]
+**Output:** true
+**Explanation:** There are two valid cycles shown in different colors in the image below:
+
+### Example 2
+**Input:** grid = [[&quot;c&quot;,&quot;c&quot;,&quot;c&quot;,&quot;a&quot;],[&quot;c&quot;,&quot;d&quot;,&quot;c&quot;,&quot;c&quot;],[&quot;c&quot;,&quot;c&quot;,&quot;e&quot;,&quot;c&quot;],[&quot;f&quot;,&quot;c&quot;,&quot;c&quot;,&quot;c&quot;]]
+**Output:** true
+**Explanation:** There is only one valid cycle highlighted in the image below:
+
+### Example 3
+**Input:** grid = [[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;],[&quot;b&quot;,&quot;z&quot;,&quot;b&quot;],[&quot;b&quot;,&quot;b&quot;,&quot;a&quot;]]
+**Output:** false
 
 ## 🧠 Approach
-- The problem is solved using a Breadth-First Search (BFS) algorithm with a visited matrix to keep track of visited cells.
-- The algorithm starts from each unvisited cell in the grid and performs a BFS traversal.
-- During the traversal, if a cell is visited again with a different parent, it means a cycle is detected, and the function returns true.
-- If no cycle is detected after visiting all cells, the function returns false.
+- The problem is solved using Depth-First Search (DFS) algorithm to detect cycles in a 2D grid.
+- The grid is represented as a 2D array of characters, where each cell contains a value.
+- The DFS function is used to traverse the grid, and it keeps track of visited cells using a boolean 2D array.
+- If a cell is visited and it has the same value as the current cell, and it's not the parent cell, then a cycle is detected.
 
 ## ⏱️ Complexity
 - Time: O(m*n), where m is the number of rows and n is the number of columns in the grid.
-- Space: O(m*n), for the visited matrix and the queue used in the BFS traversal.
+- Space: O(m*n), for the visited array.
 
 ## 📊 Stats
-- Runtime: 21 ms
-- Memory: 121.12 MB
+- Runtime: 19 ms
+- Memory: 136593.75 MB

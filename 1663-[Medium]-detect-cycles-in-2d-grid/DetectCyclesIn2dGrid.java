@@ -2,32 +2,22 @@ class Solution {
     boolean[][] visited;
     int[][] dirs = {{0, 1}, {0, -1}, {-1, 0}, {1, 0}};
 
-    public boolean bfs(char[][] grid, int i, int j, boolean[][] visited){
+    public boolean dfs(char[][] grid, int x, int y, int px, int py){
         int m = grid.length;
         int n = grid[0].length;
+        visited[x][y] = true; // mark as visited
 
-        Queue<int[]> que = new LinkedList<>();
-        que.offer(new int[]{i, j, -1, -1}); // starting index with parent -1 and -1;
-        visited[i][j] = true; // mark as visited
+        for(int[] d : dirs){
+            int nx = x + d[0];
+            int ny = y + d[1];
 
-        while(!que.isEmpty()){
-            int[] curr = que.poll();
-            int x = curr[0], y = curr[1];
-            int px = curr[2], py = curr[3];
+            if(nx < 0 || ny < 0 || nx >= m || ny >= n) continue;
+            if(grid[nx][ny] != grid[x][y]) continue;
 
-            for(int[] d : dirs){
-                int nx = x + d[0];
-                int ny = y + d[1];
-
-                if(nx < 0 || ny < 0 || nx >= m || ny >= n) continue;
-                if(grid[x][y] != grid[nx][ny]) continue;
-
-                if(!visited[nx][ny]){
-                    visited[nx][ny] = true;
-                    que.offer(new int[]{nx, ny, x, y});
-                }
-                else if(nx != px || ny != py) return true;
+            if(!visited[nx][ny]){
+                if(dfs(grid, nx, ny, x, y)) return true;
             }
+            else if(nx != px || ny != py) return true;
         }
 
         return false;
@@ -40,7 +30,7 @@ class Solution {
         for(int i=0 ; i<m ; i++){
             for(int j=0 ; j<n ; j++){
                 if(!visited[i][j]){
-                    if(bfs(grid, i, j, visited)) return true;
+                    if(dfs(grid, i, j, -1, -1)) return true;
                 }
             }
         }
