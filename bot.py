@@ -264,7 +264,7 @@ def save_problem(folder, title, slug, details, html_content):
 
     raw_memory = details.get("memory", "N/A")
     if raw_memory != "N/A":
-        memory = f"{round(raw_memory / 1024, 2)} MB"
+        memory = f"{round(raw_memory / (1024 * 1024), 2)} MB"
     else:
         memory = "N/A"
 
