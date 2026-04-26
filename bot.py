@@ -138,24 +138,34 @@ def get_question_details(slug):
     return q["content"], q["exampleTestcases"]
 
 # ----------------------------
-# Extract examples from HTML content
+# Parse HTML into sections:
+#   description | examples (code block) | constraints (code block)
 # ----------------------------
-def extract_examples(html_content):
+def parse_content(html_content):
     if not html_content:
-        return "Not available"
+        return "Not available", "Not available", "Not available"
 
-    # Strip HTML first, then work on plain text
     text = clean_html(html_content)
 
-    # Drop everything from Constraints onward
-    text = text.split("Constraints:")[0]
+    # Split off description (everything before first Example)
+    desc_split = re.split(r"Example\s+1\s*:", text, maxsplit=1)
+    description = desc_split[0].strip() if len(desc_split) > 1 else text.strip()
 
-    pattern = r"Example \d+:([\s\S]*?)(?=Example \d+:|$)"
-    matches = re.findall(pattern, text)
+    # Remainder = examples + constraints
+    after_desc = ("Example 1:" + desc_split[1]) if len(desc_split) > 1 else ""
+
+    # Split examples from constraints
+    constraints_split = re.split(r"Constraints\s*:", after_desc, maxsplit=1)
+    examples_raw = constraints_split[0].strip() if constraints_split else ""
+    constraints_raw = constraints_split[1].strip() if len(constraints_split) > 1 else ""
+
+    # Parse individual example blocks into a single fenced code block
+    pattern = r"(Example\s+\d+\s*:[\s\S]*?)(?=Example\s+\d+\s*:|$)"
+    matches = re.findall(pattern, examples_raw)
 
     blocks = []
     for i, ex in enumerate(matches, 1):
-        ex = ex.strip()
+        ex = re.sub(r"^Example\s+\d+\s*:", "", ex).strip()
 
         input_m = re.search(r"Input:\s*(.*)", ex)
         output_m = re.search(r"Output:\s*(.*)", ex)
@@ -165,12 +175,16 @@ def extract_examples(html_content):
         output_val = output_m.group(1).strip() if output_m else ""
         explanation_val = explain_m.group(1).strip() if explain_m else ""
 
-        block = f"### Example {i}\n**Input:** {input_val}\n**Output:** {output_val}"
+        lines = [f"Example {i}:", f"  Input:  {input_val}", f"  Output: {output_val}"]
         if explanation_val:
-            block += f"\n**Explanation:** {explanation_val}"
-        blocks.append(block)
+            lines.append(f"  Explanation: {explanation_val}")
 
-    return "\n\n".join(blocks) if blocks else "Not available"
+        blocks.append("\n".join(lines))
+
+    examples_block = "```\n" + "\n\n".join(blocks) + "\n```" if blocks else "Not available"
+    constraints_block = "```\n" + constraints_raw + "\n```" if constraints_raw else "Not available"
+
+    return description, examples_block, constraints_block
 
 # ----------------------------
 # AI README
@@ -220,15 +234,15 @@ def generate_ai_readme(title, code):
 # README generator
 # ----------------------------
 def generate_readme(title, slug, runtime, memory, code, html_content):
-    problem_text = clean_html(html_content)
-    examples = extract_examples(html_content)
+    description, examples_block, constraints_block = parse_content(html_content)
     ai_section = generate_ai_readme(title, code)
 
     return (
         f"# {title}\n\n"
         f"🔗 https://leetcode.com/problems/{slug}/\n\n"
-        f"## 📘 Problem\n{problem_text}\n\n"
-        f"## 🧪 Examples\n{examples}\n\n"
+        f"## 📘 Problem\n{description}\n\n"
+        f"## 🧪 Examples\n{examples_block}\n\n"
+        f"## 📐 Constraints\n{constraints_block}\n\n"
         f"{ai_section}\n\n"
         f"## 📊 Stats\n"
         f"- Runtime: {runtime}\n"
@@ -250,7 +264,6 @@ def save_problem(folder, title, slug, details, html_content):
 
     raw_memory = details.get("memory", "N/A")
     if raw_memory != "N/A":
-        # LeetCode returns memory in KB
         memory = f"{round(raw_memory / 1024, 2)} MB"
     else:
         memory = "N/A"
