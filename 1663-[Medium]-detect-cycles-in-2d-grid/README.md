@@ -11,46 +11,30 @@ Also, you cannot move to the cell that you visited in your last move. For exampl
 
 Return true if any cycle of the same value exists in grid, otherwise, return false.
 
- 
+## 🧪 Examples
+```
 Example 1:
-
-Input: grid = [[&quot;a&quot;,&quot;a&quot;,&quot;a&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;a&quot;,&quot;a&quot;,&quot;a&quot;]]
-Output: true
-Explanation: There are two valid cycles shown in different colors in the image below:
+  Input:  grid = [[&quot;a&quot;,&quot;a&quot;,&quot;a&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;a&quot;,&quot;a&quot;,&quot;a&quot;]]
+  Output: true
+  Explanation: There are two valid cycles shown in different colors in the image below:
 
 Example 2:
-
-Input: grid = [[&quot;c&quot;,&quot;c&quot;,&quot;c&quot;,&quot;a&quot;],[&quot;c&quot;,&quot;d&quot;,&quot;c&quot;,&quot;c&quot;],[&quot;c&quot;,&quot;c&quot;,&quot;e&quot;,&quot;c&quot;],[&quot;f&quot;,&quot;c&quot;,&quot;c&quot;,&quot;c&quot;]]
-Output: true
-Explanation: There is only one valid cycle highlighted in the image below:
+  Input:  grid = [[&quot;c&quot;,&quot;c&quot;,&quot;c&quot;,&quot;a&quot;],[&quot;c&quot;,&quot;d&quot;,&quot;c&quot;,&quot;c&quot;],[&quot;c&quot;,&quot;c&quot;,&quot;e&quot;,&quot;c&quot;],[&quot;f&quot;,&quot;c&quot;,&quot;c&quot;,&quot;c&quot;]]
+  Output: true
+  Explanation: There is only one valid cycle highlighted in the image below:
 
 Example 3:
+  Input:  grid = [[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;],[&quot;b&quot;,&quot;z&quot;,&quot;b&quot;],[&quot;b&quot;,&quot;b&quot;,&quot;a&quot;]]
+  Output: false
+```
 
-Input: grid = [[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;],[&quot;b&quot;,&quot;z&quot;,&quot;b&quot;],[&quot;b&quot;,&quot;b&quot;,&quot;a&quot;]]
-Output: false
-
- 
-Constraints:
-
-	m == grid.length
+## 📐 Constraints
+```
+m == grid.length
 	n == grid[i].length
 	1 <= m, n <= 500
 	grid consists only of lowercase English letters.
-
-## 🧪 Examples
-### Example 1
-**Input:** grid = [[&quot;a&quot;,&quot;a&quot;,&quot;a&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;,&quot;a&quot;],[&quot;a&quot;,&quot;a&quot;,&quot;a&quot;,&quot;a&quot;]]
-**Output:** true
-**Explanation:** There are two valid cycles shown in different colors in the image below:
-
-### Example 2
-**Input:** grid = [[&quot;c&quot;,&quot;c&quot;,&quot;c&quot;,&quot;a&quot;],[&quot;c&quot;,&quot;d&quot;,&quot;c&quot;,&quot;c&quot;],[&quot;c&quot;,&quot;c&quot;,&quot;e&quot;,&quot;c&quot;],[&quot;f&quot;,&quot;c&quot;,&quot;c&quot;,&quot;c&quot;]]
-**Output:** true
-**Explanation:** There is only one valid cycle highlighted in the image below:
-
-### Example 3
-**Input:** grid = [[&quot;a&quot;,&quot;b&quot;,&quot;b&quot;],[&quot;b&quot;,&quot;z&quot;,&quot;b&quot;],[&quot;b&quot;,&quot;b&quot;,&quot;a&quot;]]
-**Output:** false
+```
 
 ## 🧠 Approach
 - The problem is solved using Depth-First Search (DFS) algorithm to detect cycles in a 2D grid.
@@ -63,5 +47,5 @@ Constraints:
 - Space: O(m*n), for the visited array.
 
 ## 📊 Stats
-- Runtime: 19 ms
-- Memory: 136593.75 MB
+- Runtime: 18 ms
+- Memory: 136664.06 MB
