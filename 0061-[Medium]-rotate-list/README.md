@@ -35,4 +35,4 @@ The number of nodes in the list is in the range [0, 500].
 
 ## 📊 Stats
 - Runtime: 0 ms
-- Memory: 42.4 MB
+- Memory: 42.12 MB
