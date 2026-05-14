@@ -1,1 +1,1 @@
-LeetCode : 0050
+LeetCode : 2892
