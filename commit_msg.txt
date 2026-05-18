@@ -1,1 +1,1 @@
-LeetCode : 4303, 4305, 1428
+LeetCode : 1447
