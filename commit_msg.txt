@@ -1,1 +1,1 @@
-LeetCode : 1547
+LeetCode : 1542
