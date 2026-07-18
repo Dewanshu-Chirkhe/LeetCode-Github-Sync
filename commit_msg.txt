@@ -1,1 +1,1 @@
-LeetCode : 1231, 2271, 0026
+LeetCode : 2106
