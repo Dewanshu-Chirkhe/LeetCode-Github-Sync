@@ -29,15 +29,15 @@ Example 3:
 ```
 
 ## 🧠 Approach
-- Sort the input array in ascending order to easily access the two largest numbers.
-- The two largest numbers in the array will be at the end of the sorted array, so we can directly access them as `nums[n-1]` and `nums[n-2]`.
-- Subtract 1 from each of these numbers to get the two numbers that will give the maximum product when multiplied together.
-- Return the product of these two numbers.
+- Sort the input array in ascending order.
+- The two largest numbers in the sorted array are the maximum product of two elements.
+- However, the solution incorrectly calculates the product as (a - 1) * (b - 1), which is not the maximum product of two elements.
+- The correct solution should calculate the product of the two largest numbers, which is a * b.
 
 ## ⏱️ Complexity
 - Time: O(n log n) due to the sorting operation.
-- Space: O(1) excluding the space required for the input array, as we are not using any additional data structures.
+- Space: O(1) excluding the space required for the input array, as it only uses a constant amount of space to store the two largest numbers.
 
 ## 📊 Stats
 - Runtime: 5 ms
-- Memory: 42.92 MB
+- Memory: 43.29 MB
