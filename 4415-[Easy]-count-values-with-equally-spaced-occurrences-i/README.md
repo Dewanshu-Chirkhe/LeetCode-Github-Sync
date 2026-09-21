@@ -51,5 +51,5 @@ Example 3:
 - Space: O(1)
 
 ## 📊 Stats
-- Runtime: 6 ms
-- Memory: 44.63 MB
+- Runtime: 5 ms
+- Memory: 44.91 MB
