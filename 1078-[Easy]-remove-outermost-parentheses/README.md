@@ -53,4 +53,4 @@ After removing outer parentheses of each part, this is &quot;&quot; + &quot;&quo
 
 ## 📊 Stats
 - Runtime: 3 ms
-- Memory: 41.48 MB
+- Memory: 41.6 MB
