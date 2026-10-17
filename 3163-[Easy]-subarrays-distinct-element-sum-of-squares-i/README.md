@@ -54,5 +54,5 @@ The sum of the squares of the distinct counts in all subarrays is equal to 12 + 
 - Space: O(1)
 
 ## 📊 Stats
-- Runtime: 10 ms
-- Memory: 44.07 MB
+- Runtime: 11 ms
+- Memory: 44.29 MB
