@@ -1,1 +1,1 @@
-LeetCode : 3950
+LeetCode : 2496
