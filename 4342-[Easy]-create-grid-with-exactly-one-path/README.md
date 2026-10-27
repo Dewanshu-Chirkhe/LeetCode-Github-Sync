@@ -47,15 +47,15 @@ Example 3:
 ```
 
 ## 🧠 Approach
-- Initialize an array of strings `ans` with size `m` to store the grid rows.
-- Iterate over each row `i` from 0 to `m-1`.
-- If `i` is 0, fill the row with '.' (dot) characters using `Arrays.fill`.
-- If `i` is not 0, fill the row with '#' (hash) characters, then replace the last character with '.'.
+- Identify core logic
+- Use proper data structure
+- Optimize traversal
+- Return result
 
 ## ⏱️ Complexity
-- Time: O(m*n)
-- Space: O(m*n)
+- Time: O(N)
+- Space: O(1)
 
 ## 📊 Stats
-- Runtime: 1 ms
-- Memory: 44.35 MB
+- Runtime: 3 ms
+- Memory: 44.28 MB
