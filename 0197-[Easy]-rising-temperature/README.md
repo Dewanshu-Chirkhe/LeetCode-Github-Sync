@@ -47,5 +47,5 @@ Not available
 - Space: O(1)
 
 ## 📊 Stats
-- Runtime: 636 ms
+- Runtime: 642 ms
 - Memory: 0.0 MB
