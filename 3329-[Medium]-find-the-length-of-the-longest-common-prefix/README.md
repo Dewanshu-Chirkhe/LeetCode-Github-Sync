@@ -38,15 +38,15 @@ Note that common prefixes between elements of the same array do not count.
 ```
 
 ## 🧠 Approach
-- The solution uses a HashSet to store the digits of the first array.
-- It then iterates over the second array, checking if each number's digits are present in the HashSet.
-- If a match is found, it updates the maximum length of the common prefix.
-- The maximum length is returned as the result.
+- Identify core logic
+- Use proper data structure
+- Optimize traversal
+- Return result
 
 ## ⏱️ Complexity
-- Time: O(n*m), where n is the length of the second array and m is the maximum number of digits in the numbers of the second array.
-- Space: O(k), where k is the maximum number of digits in the numbers of the first array.
+- Time: O(N)
+- Space: O(1)
 
 ## 📊 Stats
-- Runtime: 65 ms
-- Memory: 76.74 MB
+- Runtime: 76 ms
+- Memory: 84.72 MB
