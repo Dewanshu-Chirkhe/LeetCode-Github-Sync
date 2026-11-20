@@ -92,4 +92,4 @@ Example 3:
 
 ## 📊 Stats
 - Runtime: 3 ms
-- Memory: 43.79 MB
+- Memory: 43.6 MB
